@@ -70,9 +70,9 @@ def init_args():
 
 def init_components(args):
     '''
-    描述：加载训练的各种东西--device，model，data，criterion，scheduler，optimizer
+    描述：加载训练的各种东西--device，model，data，criterion，scheduler，optimizer, epochs
     参数：args参数
-    返回：device，model，train_loader,test_loader,criterion,scheduler,optimizer
+    返回：device，model，train_loader,test_loader,criterion,scheduler,optimizer, epochs
     '''
     #device
     torch.cuda.set_device(constants.gpu_id)
@@ -126,7 +126,13 @@ def init_components(args):
     elif(args.lr_decay == 'fast'):
         scheduler = MultiStepLR(optimizer, milestones=[30, 48, 58], gamma=0.2)
 
-    return device, model, train_loader, test_loader, criterion, optimizer, scheduler
+
+    #epochs
+    if(args.dataset == 'cifar10' or args.dataset == 'cifar100'):
+        epochs = constants.cnn_epochs
+    elif(args.dataset == 'imdb'):
+        epochs = constants.imdb_epochs
+    return device, model, train_loader, test_loader, criterion, optimizer, scheduler, epochs
 
 
 
@@ -181,10 +187,10 @@ def test(device, model, test_loader, criterion):
 
 
 
-def main(device, model, train_loader, test_loader, criterion, optimizer, scheduler):
+def main(device, model, train_loader, test_loader, criterion, optimizer, scheduler, epochs):
     '''
     描述：cnn训练-测试主函数
-    参数：device, model, train_loader, test_loader, criterion, optimizer, scheduler
+    参数：device, model, train_loader, test_loader, criterion, optimizer, scheduler, epochs
     返回：train_loss, train_accuracy, test_loss, test_accuracy的list； best_accuracy
     '''
     train_loss_list = []
@@ -192,8 +198,8 @@ def main(device, model, train_loader, test_loader, criterion, optimizer, schedul
     test_loss_list = []
     test_accuracy_list = []
     best_accuracy = 0.0
-    for epoch in range(constants.cnn_epochs):
-        print('epoch:{:d}/{:d}'.format(epoch + 1, constants.cnn_epochs))
+    for epoch in range(epochs):
+        print('epoch:{:d}/{:d}'.format(epoch + 1, epochs))
         print('*' * 100)
 
         
@@ -228,11 +234,11 @@ def main(device, model, train_loader, test_loader, criterion, optimizer, schedul
 if __name__ == '__main__': 
     
     args, result_dir = init_args()
-    device, model, train_loader, test_loader, criterion, optimizer, scheduler = init_components(args)
+    device, model, train_loader, test_loader, criterion, optimizer, scheduler, epochs = init_components(args)
     train_loss_list, train_accuracy_list, test_loss_list, test_accuracy_list, best_accuracy = \
-        main(device, model, train_loader, test_loader, criterion, optimizer, scheduler)
+        main(device, model, train_loader, test_loader, criterion, optimizer, scheduler, epochs)
     with open(result_dir,"w") as f:
-        for i in range(constants.cnn_epochs):
+        for i in range(epochs):
             f.write("train_loss: {:.4f}\n".format(train_loss_list[i]))
             f.write("train_accuracy: {:.4f}\n".format(train_accuracy_list[i]))
             f.write("test_loss: {:.4f}\n".format(test_loss_list[i]))
