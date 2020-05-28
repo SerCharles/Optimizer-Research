@@ -21,14 +21,10 @@ def init_args():
     '''
     描述：加载命令行选项
     参数：无
-    返回：args，全局参数
+    返回：args全局参数， result_dir结果存储位置
     '''
     
-    print("Please specify the save name of result (in ../results as txt form)")
-    file_name = input()
-    result_dir = constants.result_dir + file_name + constants.result_back
-    print("The result will be saved at", result_dir)
-    
+
     lookahead_options = [1, 0]
     
     dataset_options = ['cifar10', 'cifar100']
@@ -66,7 +62,13 @@ def init_args():
     
     args = parser.parse_args()
     print(args)
-    return args
+    print("Please specify the save name of result (in ../results as txt form)")
+    file_name = input()
+    result_dir = constants.result_dir + file_name + constants.result_back
+    print("The result will be saved at", result_dir)
+    
+    
+    return args, result_dir
 
 def init_components_cnn(args):
     '''
@@ -215,7 +217,7 @@ def main_cnn(device, model, train_loader, test_loader, criterion, optimizer, sch
 
 if __name__ == '__main__': 
     
-    args = init_args()
+    args, result_dir = init_args()
     if(args.dataset == 'cifar10' or args.dataset == 'cifar100'):
         device, model, train_loader, test_loader, criterion, optimizer, scheduler = init_components_cnn(args)
         train_loss_list, train_accuracy_list, test_loss_list, test_accuracy_list, best_accuracy = \
