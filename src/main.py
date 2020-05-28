@@ -27,6 +27,18 @@ def init_args():
 
     #优化算法组合：RAdam + lookahead
     algorithm_options = ['SGD', 'Adam', 'RAdam']
+    
+    #学习率两种：0.1,0.3
+    lr_options = [0.1, 0.3]
+    
+    #lookahead步数2种：5,10
+    lookahead_step_options = [5, 10]
+    
+    #lookahead lr 2种：0.8, 0.5
+    lookahead_lr_options = [0.5, 0.8]
+    
+    #衰减两种:快速，慢速
+    decay_options = ['slow', 'fast']
 
     parser = argparse.ArgumentParser(description='CNN')
     parser.add_argument('--dataset', '-d', default='cifar10',
@@ -34,12 +46,18 @@ def init_args():
     parser.add_argument('--algorithm', '-a', default='Adam',
                     choices=algorithm_options)
     parser.add_argument('--lookahead', type=bool, default=True, help='Whether use lookahead or not')
-    parser.add_argument('--lookahead_steps', '-s', type=int, default=5, help='The step k of lookahead')
-    parser.add_argument('--lookahead_lr', '-l', type=float, default=0.8, help='The inner learning rate of lookahead')
-
+    parser.add_argument('--lookahead_lr', '-l', type=float, default=0.8, help='The inner learning rate of lookahead(0.8 default)', 
+                        choices = lookahead_lr_options)
+    parser.add_argument('--lookahead_steps' , type=int, default=5, help='The step k of lookahead(5 default)', \
+        choices = lookahead_step_options)
+    parser.add_argument('--learning_rate','-lr', type=float, default=0.1, help='The learning rate (0.1 default)', 
+                        choices = lr_options)
+    parser.add_argument('--lr_decay', default='slow', help='The learning rate decay strategy, slow(default) or fast', 
+                        choices = decay_options)
     #TODO 更多超参数
     
     args = parser.parse_args()
+    print(args)
     return args
 
 def init_components_cnn(args):
@@ -71,19 +89,23 @@ def init_components_cnn(args):
     #criterion
     criterion = nn.CrossEntropyLoss()
     
+    
     #optimizer
     if(args.algorithm == 'Adam'):
-        optimizer = torch.optim.Adam(model.parameters(), lr=constants.cnn_learning_rate,
+        optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate,
                                 weight_decay=5e-4)
     elif(args.algorithm == 'SGD'):
-        optimizer = torch.optim.SGD(model.parameters(), lr=constants.cnn_learning_rate,
+        optimizer = torch.optim.SGD(model.parameters(), lr=args.learning_rate,
                                 weight_decay=5e-4)
     
     if(args.lookahead == True):
         optimizer = algorithm.lookahead.Lookahead(optimizer, args.lookahead_steps, args.lookahead_lr)
         
     #scheduler
-    scheduler = MultiStepLR(optimizer, milestones=[60, 120, 160], gamma=0.2)
+    if(args.lr_decay == 'slow'):
+        scheduler = MultiStepLR(optimizer, milestones=[60, 120, 160], gamma=0.2)
+    elif(args.lr_decay == 'fast'):
+        scheduler = MultiStepLR(optimizer, milestones=[30, 48, 58], gamma=0.2)
 
     return device, model, train_loader, test_loader, criterion, optimizer, scheduler
 
@@ -162,7 +184,7 @@ def main_cnn(device, model, train_loader, test_loader, criterion, optimizer, sch
         train_loss, train_accuracy = train_cnn(device, model, train_loader, optimizer, criterion)
         train_end = time.time()
         
-        print("training: {:.4f}, {:.4f}".format(train_loss, train_accuracy))
+        print("train: {:.4f}, {:.4f}".format(train_loss, train_accuracy))
         
         test_start = time.time()
         test_loss, test_accuracy = test_cnn(device, model, test_loader, criterion)
@@ -170,22 +192,32 @@ def main_cnn(device, model, train_loader, test_loader, criterion, optimizer, sch
         if test_accuracy > best_accuracy:
             best_accuracy = test_accuracy
 
-        print("validation: {:.4f}, {:.4f}".format(test_loss, test_accuracy))
+        print("test: {:.4f}, {:.4f}".format(test_loss, test_accuracy))
         print("train time: {:.4f} s".format(train_end - train_start))
-        print("valid time: {:.4f} s".format(test_end - test_start))
+        print("test time: {:.4f} s".format(test_end - test_start))
 
         train_loss_list.append(train_loss)
         train_accuracy_list.append(train_accuracy)
         test_loss_list.append(test_loss)
         test_accuracy_list.append(test_accuracy)
-        
+
         scheduler.step(epoch)
     return train_loss_list, train_accuracy_list, test_loss_list, test_accuracy_list, best_accuracy
 
 
-if __name__ == '__main__':
+if __name__ == '__main__': 
+    print("Please specify the save name of result (in ../results as txt form)")
+    file_name = input()
+    result_dir = constants.result_dir + file_name + constants.result_back
+    print("The result will be saved at", result_dir)
     args = init_args()
     if(args.dataset == 'cifar10' or args.dataset == 'cifar100'):
         device, model, train_loader, test_loader, criterion, optimizer, scheduler = init_components_cnn(args)
         train_loss_list, train_accuracy_list, test_loss_list, test_accuracy_list, best_accuracy = \
             main_cnn(device, model, train_loader, test_loader, criterion, optimizer, scheduler)
+        with open(result_dir,"w") as f:
+            for i in range(constants.cnn_epochs):
+                f.write("train_loss: {:.4f}\n".format(train_loss_list[i]))
+                f.write("train_accuracy: {:.4f}\n".format(train_accuracy_list[i]))
+                f.write("test_loss: {:.4f}\n".format(test_loss_list[i]))
+                f.write("test_accuracy: {:.4f}\n".format(test_accuracy_list[i]))
