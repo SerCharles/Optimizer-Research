@@ -29,6 +29,8 @@ def init_args():
     result_dir = constants.result_dir + file_name + constants.result_back
     print("The result will be saved at", result_dir)
     
+    lookahead_options = [1, 0]
+    
     dataset_options = ['cifar10', 'cifar100']
 
     #优化算法组合：RAdam + lookahead
@@ -51,7 +53,7 @@ def init_args():
                     choices=dataset_options)
     parser.add_argument('--algorithm', '-a', default='Adam',
                     choices=algorithm_options)
-    parser.add_argument('--lookahead', type=bool, default=True, help='Whether use lookahead or not')
+    parser.add_argument('--lookahead', type=int, default=1, help='Whether use lookahead or not', choices=lookahead_options)
     parser.add_argument('--lookahead_lr', '-l', type=float, default=0.8, help='The inner learning rate of lookahead(0.8 default)', 
                         choices = lookahead_lr_options)
     parser.add_argument('--lookahead_steps' , type=int, default=5, help='The step k of lookahead(5 default)', \
@@ -104,7 +106,7 @@ def init_components_cnn(args):
         optimizer = torch.optim.SGD(model.parameters(), lr=args.learning_rate,
                                 weight_decay=5e-4)
     
-    if(args.lookahead == True):
+    if(args.lookahead == 1):
         optimizer = algorithm.lookahead.Lookahead(optimizer, args.lookahead_steps, args.lookahead_lr)
         
     #scheduler
