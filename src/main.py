@@ -23,6 +23,12 @@ def init_args():
     参数：无
     返回：args，全局参数
     '''
+    
+    print("Please specify the save name of result (in ../results as txt form)")
+    file_name = input()
+    result_dir = constants.result_dir + file_name + constants.result_back
+    print("The result will be saved at", result_dir)
+    
     dataset_options = ['cifar10', 'cifar100']
 
     #优化算法组合：RAdam + lookahead
@@ -206,10 +212,7 @@ def main_cnn(device, model, train_loader, test_loader, criterion, optimizer, sch
 
 
 if __name__ == '__main__': 
-    print("Please specify the save name of result (in ../results as txt form)")
-    file_name = input()
-    result_dir = constants.result_dir + file_name + constants.result_back
-    print("The result will be saved at", result_dir)
+    
     args = init_args()
     if(args.dataset == 'cifar10' or args.dataset == 'cifar100'):
         device, model, train_loader, test_loader, criterion, optimizer, scheduler = init_components_cnn(args)
