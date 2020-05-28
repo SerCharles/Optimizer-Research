@@ -9,10 +9,10 @@ import torch.backends.cudnn as cudnn
 from torch.optim.lr_scheduler import MultiStepLR
 from torchvision.utils import make_grid
 from torchvision import datasets, transforms
-from model.model_cnn import ResNet18
+from models import ResNet18, LSTMNet
 
 import constants
-import data.cifar10_loader, data.cifar100_loader
+import data.cifar10_loader, data.cifar100_loader, data.imdb_loader
 import algorithm.lookahead
 
 
@@ -27,7 +27,7 @@ def init_args():
 
     lookahead_options = [1, 0]
     
-    dataset_options = ['cifar10', 'cifar100']
+    dataset_options = ['cifar10', 'cifar100', 'imdb']
 
     #优化算法组合：RAdam + lookahead
     algorithm_options = ['SGD', 'Adam', 'RAdam']
@@ -58,7 +58,6 @@ def init_args():
                         choices = lr_options)
     parser.add_argument('--lr_decay', default='slow', help='The learning rate decay strategy, slow(default) or fast', 
                         choices = decay_options)
-    #TODO 更多超参数
     
     args = parser.parse_args()
     print(args)
@@ -67,10 +66,9 @@ def init_args():
     result_dir = constants.result_dir + file_name + constants.result_back
     print("The result will be saved at", result_dir)
     
-    
     return args, result_dir
 
-def init_components_cnn(args):
+def init_components(args):
     '''
     描述：加载训练的各种东西--device，model，data，criterion，scheduler，optimizer
     参数：args参数
@@ -91,23 +89,34 @@ def init_components_cnn(args):
     elif(args.dataset == 'cifar100'):
         train_loader, test_loader = data.cifar100_loader.load_data(data_dir = constants.data_dir, batch_size = constants.cnn_batch_size)
         num_classes = 100
+    elif(args.dataset == 'imdb'):
+        train_loader, test_loader = data.imdb_loader.load_data()
+        num_classes = 2
+        
     #model
-    model = ResNet18(num_classes = num_classes)
-
+    if(args.dataset == 'cifar10' or args.dataset == 'cifar100'):
+        model = ResNet18(num_classes = num_classes)
+    elif(args.dataset == 'imdb'):
+        model = LSTMNet()
     model.to(device)
     
     #criterion
     criterion = nn.CrossEntropyLoss()
     
-    
     #optimizer
-    if(args.algorithm == 'Adam'):
-        optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate,
+    learning_rate = args.learning_rate
+    if(args.dataset == 'cifar10' or args.dataset == 'cifar100'):
+        if(args.algorithm == 'Adam'):
+            optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate,
                                 weight_decay=5e-4)
-    elif(args.algorithm == 'SGD'):
-        optimizer = torch.optim.SGD(model.parameters(), lr=args.learning_rate,
+        elif(args.algorithm == 'SGD'):
+            optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate,
                                 weight_decay=5e-4)
-    
+    elif(args.dataset == 'imdb'):
+        if(args.algorithm == 'Adam'):
+            optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate / 100)
+        elif(args.algorithm == 'SGD'):
+            optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate / 100)
     if(args.lookahead == 1):
         optimizer = algorithm.lookahead.Lookahead(optimizer, args.lookahead_steps, args.lookahead_lr)
         
@@ -121,7 +130,7 @@ def init_components_cnn(args):
 
 
 
-def train_cnn(device, model, train_loader, optimizer, criterion):
+def train(device, model, train_loader, optimizer, criterion):
     '''
     描述：训练cnn模型一个epoch
     参数：device, model, train_loader, optimizer, criterion
@@ -148,7 +157,7 @@ def train_cnn(device, model, train_loader, optimizer, criterion):
     epoch_acc = total_correct.double() / len(train_loader.dataset)
     return epoch_loss, epoch_acc.item()
 
-def test_cnn(device, model, test_loader, criterion):
+def test(device, model, test_loader, criterion):
     '''
     描述：验证cnn模型一个epoch
     参数：device, model, test_loader, optimizer, criterion
@@ -172,9 +181,7 @@ def test_cnn(device, model, test_loader, criterion):
 
 
 
-
-
-def main_cnn(device, model, train_loader, test_loader, criterion, optimizer, scheduler):
+def main(device, model, train_loader, test_loader, criterion, optimizer, scheduler):
     '''
     描述：cnn训练-测试主函数
     参数：device, model, train_loader, test_loader, criterion, optimizer, scheduler
@@ -191,13 +198,14 @@ def main_cnn(device, model, train_loader, test_loader, criterion, optimizer, sch
 
         
         train_start = time.time()
-        train_loss, train_accuracy = train_cnn(device, model, train_loader, optimizer, criterion)
+        train_loss, train_accuracy = train(device, model, train_loader, optimizer, criterion)
         train_end = time.time()
         
         print("train: {:.4f}, {:.4f}".format(train_loss, train_accuracy))
         
         test_start = time.time()
-        test_loss, test_accuracy = test_cnn(device, model, test_loader, criterion)
+
+        test_loss, test_accuracy = test(device, model, test_loader, criterion)
         test_end = time.time()
         if test_accuracy > best_accuracy:
             best_accuracy = test_accuracy
@@ -211,20 +219,21 @@ def main_cnn(device, model, train_loader, test_loader, criterion, optimizer, sch
         test_loss_list.append(test_loss)
         test_accuracy_list.append(test_accuracy)
 
-        scheduler.step(epoch)
+        if(args.dataset == 'cifar10' or args.dataset == 'cifar100'):
+            scheduler.step(epoch)
     return train_loss_list, train_accuracy_list, test_loss_list, test_accuracy_list, best_accuracy
+
 
 
 if __name__ == '__main__': 
     
     args, result_dir = init_args()
-    if(args.dataset == 'cifar10' or args.dataset == 'cifar100'):
-        device, model, train_loader, test_loader, criterion, optimizer, scheduler = init_components_cnn(args)
-        train_loss_list, train_accuracy_list, test_loss_list, test_accuracy_list, best_accuracy = \
-            main_cnn(device, model, train_loader, test_loader, criterion, optimizer, scheduler)
-        with open(result_dir,"w") as f:
-            for i in range(constants.cnn_epochs):
-                f.write("train_loss: {:.4f}\n".format(train_loss_list[i]))
-                f.write("train_accuracy: {:.4f}\n".format(train_accuracy_list[i]))
-                f.write("test_loss: {:.4f}\n".format(test_loss_list[i]))
-                f.write("test_accuracy: {:.4f}\n".format(test_accuracy_list[i]))
+    device, model, train_loader, test_loader, criterion, optimizer, scheduler = init_components(args)
+    train_loss_list, train_accuracy_list, test_loss_list, test_accuracy_list, best_accuracy = \
+        main(device, model, train_loader, test_loader, criterion, optimizer, scheduler)
+    with open(result_dir,"w") as f:
+        for i in range(constants.cnn_epochs):
+            f.write("train_loss: {:.4f}\n".format(train_loss_list[i]))
+            f.write("train_accuracy: {:.4f}\n".format(train_accuracy_list[i]))
+            f.write("test_loss: {:.4f}\n".format(test_loss_list[i]))
+            f.write("test_accuracy: {:.4f}\n".format(test_accuracy_list[i]))
