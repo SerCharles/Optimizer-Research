@@ -12,9 +12,10 @@ cnn_batch_size = 128
 cnn_epochs = 200
 
 imdb_epochs = 40
-rnn_max_words = 10000  # imdb’s vocab_size 即词汇表大小
-rnn_max_len = 200      # max length
-rnn_batch_size = 256
-rnn_embedding_size = 128   # embedding size
-rnn_hidden_size = 128   # lstm hidden size
-rnn_dropout = 0.2 
+imdb_max_words = 10000  # imdb’s vocab_size 即词汇表大小
+imdb_max_len = 200      # max length
+imdb_batch_size = 256
+imdb_embedding_size = 128   # embedding size
+imdb_hidden_size = 128   # lstm hidden size
+imdb_dropout = 0.2 
+imdb_lr = 0.001

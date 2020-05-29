@@ -9,11 +9,13 @@ import torch.backends.cudnn as cudnn
 from torch.optim.lr_scheduler import MultiStepLR
 from torchvision.utils import make_grid
 from torchvision import datasets, transforms
-from models import ResNet18, LSTMNet
+from models.cnn_model import ResNet18
+from models.imdb_model import LSTMNet
 
 import constants
 import data.cifar10_loader, data.cifar100_loader, data.imdb_loader
 import algorithm.lookahead
+import algorithm.RAdam
 
 
 
@@ -24,7 +26,6 @@ def init_args():
     返回：args全局参数， result_dir结果存储位置
     '''
     
-
     lookahead_options = [1, 0]
     
     dataset_options = ['cifar10', 'cifar100', 'imdb']
@@ -112,11 +113,18 @@ def init_components(args):
         elif(args.algorithm == 'SGD'):
             optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate,
                                 weight_decay=5e-4)
+        elif(args.algorithm == 'RAdam'):
+            optimizer = algorithm.RAdam.RAdam(model.parameters(), lr=learning_rate,
+                                weight_decay=5e-4)
+
     elif(args.dataset == 'imdb'):
         if(args.algorithm == 'Adam'):
             optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate / 100)
         elif(args.algorithm == 'SGD'):
             optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate / 100)
+        elif(args.algorithm == 'RAdam'):
+            optimizer = algorithm.RAdam.RAdam(model.parameters(), lr=learning_rate / 100)
+
     if(args.lookahead == 1):
         optimizer = algorithm.lookahead.Lookahead(optimizer, args.lookahead_steps, args.lookahead_lr)
         
@@ -243,3 +251,5 @@ if __name__ == '__main__':
             f.write("train_accuracy: {:.4f}\n".format(train_accuracy_list[i]))
             f.write("test_loss: {:.4f}\n".format(test_loss_list[i]))
             f.write("test_accuracy: {:.4f}\n".format(test_accuracy_list[i]))
+    
+        

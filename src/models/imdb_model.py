@@ -35,12 +35,6 @@ class RNNModel(nn.Module):
         out = self.fc2(x)    # [bs, 2]
         return out  # [bs, 2]
     
-def ResNet18(num_classes):
-    model_resnet = models.resnet18(pretrained = False)
-    num_features = model_resnet.fc.in_features
-    model_resnet.fc = nn.Linear(num_features, num_classes)
-    return model_resnet
-
 def LSTMNet():
-    model = RNNModel(constants.rnn_max_words, constants.rnn_embedding_size, constants.rnn_hidden_size, constants.rnn_dropout)
+    model = RNNModel(constants.imdb_max_words, constants.imdb_embedding_size, constants.imdb_hidden_size, constants.imdb_dropout)
     return model
