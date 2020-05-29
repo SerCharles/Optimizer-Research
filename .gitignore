@@ -9,6 +9,7 @@ __pycache__/
 # data
 /data/
 /results/
+/src/runs/
 
 # Distribution / packaging
 .Python

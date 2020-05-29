@@ -19,3 +19,9 @@ imdb_embedding_size = 128   # embedding size
 imdb_hidden_size = 128   # lstm hidden size
 imdb_dropout = 0.2 
 imdb_lr = 0.001
+
+nlp_train_batch_size = 20
+nlp_test_batch_size = 10
+nlp_learning_rate = 0.001
+nlp_epochs = 100
+nlp_data_dir = '../data/ptb'

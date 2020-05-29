@@ -48,7 +48,7 @@ def init_args():
     parser = argparse.ArgumentParser(description='CNN')
     parser.add_argument('--dataset', '-d', default='cifar10',
                     choices=dataset_options)
-    parser.add_argument('--algorithm', '-a', default='Adam',
+    parser.add_argument('--algorithm', '-a', default='RAdam',
                     choices=algorithm_options)
     parser.add_argument('--lookahead', type=int, default=1, help='Whether use lookahead or not', choices=lookahead_options)
     parser.add_argument('--lookahead_lr', '-l', type=float, default=0.8, help='The inner learning rate of lookahead(0.8 default)', 
