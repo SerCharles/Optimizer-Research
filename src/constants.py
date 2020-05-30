@@ -11,7 +11,7 @@ result_back = '.txt'
 cnn_batch_size = 128
 cnn_epochs = 200
 
-imdb_epochs = 40
+imdb_epochs = 10
 imdb_max_words = 10000  # imdb’s vocab_size 即词汇表大小
 imdb_max_len = 200      # max length
 imdb_batch_size = 256

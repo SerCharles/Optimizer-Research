@@ -33,8 +33,8 @@ def init_args():
     #优化算法组合：RAdam + lookahead
     algorithm_options = ['SGD', 'Adam', 'RAdam']
     
-    #学习率两种：0.1,0.3
-    lr_options = [0.1, 0.3]
+    #学习率两种：0.1,0.01(adam一律是0.001)
+    lr_options = [0.1, 0.01]
     
     #lookahead步数2种：5,10
     lookahead_step_options = [5, 10]
@@ -108,7 +108,7 @@ def init_components(args):
     learning_rate = args.learning_rate
     if(args.dataset == 'cifar10' or args.dataset == 'cifar100'):
         if(args.algorithm == 'Adam'):
-            optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate,
+            optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate / 100,
                                 weight_decay=5e-4)
         elif(args.algorithm == 'SGD'):
             optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate,
@@ -121,9 +121,9 @@ def init_components(args):
         if(args.algorithm == 'Adam'):
             optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate / 100)
         elif(args.algorithm == 'SGD'):
-            optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate / 100)
+            optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
         elif(args.algorithm == 'RAdam'):
-            optimizer = algorithm.RAdam.RAdam(model.parameters(), lr=learning_rate / 100)
+            optimizer = algorithm.RAdam.RAdam(model.parameters(), lr=learning_rate)
 
     if(args.lookahead == 1):
         optimizer = algorithm.lookahead.Lookahead(optimizer, args.lookahead_steps, args.lookahead_lr)
