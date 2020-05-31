@@ -177,6 +177,15 @@ if __name__ == '__main__':
     PlotAblation.append(SGDLookahead)
     PlotAblation.append(AdamLookahead)
     PlotAblation.append(Ranger)
+    
+    PlotBatch = []
+    Batch2 = {"model_name":"2 steps, 320 batchs", "model_dir":"adam_yes_2_320"}
+    Batch5 = {"model_name":"5 steps, 128 batchs", "model_dir":"adam_yes"}
+    Batch10 = {"model_name":"10 steps, 64 batchs", "model_dir":"adam_yes_10_64"}
+    PlotBatch.append(Batch2)
+    PlotBatch.append(Batch5)
+    PlotBatch.append(Batch10)
+
 
     PlotBase100 = []
     Baseline100 = {"model_name":"RAdam", "model_dir":"radam_no_cifar100"}
@@ -220,6 +229,15 @@ if __name__ == '__main__':
     PlotAblation100.append(AdamLookahead100)
     PlotAblation100.append(Ranger100)
 
+    PlotBatch100 = []
+    Batch2100 = {"model_name":"2 steps, 320 batchs", "model_dir":"adam_yes_2_320_cifar100"}
+    Batch5100 = {"model_name":"5 steps, 128 batchs", "model_dir":"adam_yes_cifar100"}
+    Batch10100 = {"model_name":"10 steps, 64 batchs", "model_dir":"adam_yes_10_64_cifar100"}
+    PlotBatch100.append(Batch2100)
+    PlotBatch100.append(Batch5100)
+    PlotBatch100.append(Batch10100)
+
+
     PlotPTB = []
     RAdamPTB = {"model_name":"RAdam", "model_dir":"nlp_no"}
     RangerPTB = {"model_name":"Ranger", "model_dir":"nlp_yes"}
@@ -250,7 +268,8 @@ if __name__ == '__main__':
     print("031:Contrast between Ranger and RAdam on cifar10 when Ranger's lookahead uses different parameters -- test accuracy")
     print("040:Ranger's ablation study on cifar10 -- train loss")
     print("041:Ranger's ablation study on cifar10 -- test accuracy")
-    
+    print("050:Contrast between different combinations of inner steps and batches on cifar10 -- train loss")
+    print("051:Contrast between different combinations of inner steps and batches on cifar10 -- test accuracy")   
     
     print("100:Contrast between Ranger and RAdam on cifar100 -- train loss")
     print("101:Contrast between Ranger and RAdam on cifar100 -- test accuracy")
@@ -262,6 +281,8 @@ if __name__ == '__main__':
     print("131:Contrast between Ranger and RAdam on cifar100 when Ranger's lookahead uses different parameters -- test accuracy")
     print("140:Ranger's ablation study on cifar100 -- train loss")
     print("141:Ranger's ablation study on cifar100 -- test accuracy")
+    print("150:Contrast between different combinations of inner steps and batches on cifar100 -- train loss")
+    print("151:Contrast between different combinations of inner steps and batches on cifar100 -- test accuracy") 
     
     print("200:Contrast between Ranger and RAdam on ptb -- train perplexity")
     print("201:Contrast between Ranger and RAdam on ptb -- test perplexity")
@@ -292,6 +313,10 @@ if __name__ == '__main__':
         PlotCurves(PlotAblation, 'loss', "The train loss contrast of Ranger's ablation study on cifar10")
     elif num == "041":
         PlotCurves(PlotAblation, 'accuracy', "The test accuracy contrast of Ranger's ablation study on cifar10")
+    elif num == "050":
+        PlotCurves(PlotBatch, 'loss', "The train loss contrast between different combinations of inner steps and batches on cifar10")
+    elif num == "051":
+        PlotCurves(PlotBatch, 'accuracy', "The test accuracy contrast between different combinations of inner steps and batches on cifar10")
 
 
     elif num == "100":
@@ -314,7 +339,10 @@ if __name__ == '__main__':
         PlotCurves(PlotAblation100, 'loss', "The train loss contrast of Ranger's ablation study on cifar100")
     elif num == "141":
         PlotCurves(PlotAblation100, 'accuracy', "The test accuracy contrast of Ranger's ablation study on cifar100")
-      
+    elif num == "150":
+        PlotCurves(PlotBatch100, 'loss', "The train loss contrast between different combinations of inner steps and batches on cifar100")
+    elif num == "151":
+        PlotCurves(PlotBatch100, 'accuracy', "The test accuracy contrast between different combinations of inner steps and batches on cifar100")
       
     elif num == '200':
         PlotCurvesNLP(PlotPTB, 'loss', 'The train perplexity contrast on PTB.')
