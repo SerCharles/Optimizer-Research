@@ -1,3 +1,7 @@
+'''
+描述：读取imdb数据集
+'''
+
 import torch 
 import torch.nn as nn 
 import torch.optim as optim 

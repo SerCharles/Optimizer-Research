@@ -1,3 +1,7 @@
+'''
+描述：读取cifar10数据集
+'''
+
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 import torch

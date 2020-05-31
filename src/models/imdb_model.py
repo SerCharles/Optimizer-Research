@@ -1,3 +1,8 @@
+'''
+描述：一个RNN模型，用于训练imdb情感分类数据
+'''
+
+
 from torchvision import models
 import torch
 import torch.nn as nn
@@ -36,5 +41,10 @@ class RNNModel(nn.Module):
         return out  # [bs, 2]
     
 def LSTMNet():
+    '''
+    描述：加载模型的接口
+    参数：无
+    返回：模型
+    '''
     model = RNNModel(constants.imdb_max_words, constants.imdb_embedding_size, constants.imdb_hidden_size, constants.imdb_dropout)
     return model

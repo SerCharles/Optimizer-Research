@@ -1,5 +1,5 @@
 '''
-绘制一个模型的训练，测试模型
+绘制一个模型的训练，测试曲线
 '''
 
 import matplotlib.pyplot as plt

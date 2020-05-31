@@ -1,3 +1,7 @@
+'''
+描述：读取cifar100数据集
+'''
+
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 import torch
@@ -6,7 +10,7 @@ import os
 
 def load_data(data_dir = "../data/", batch_size = 128):
     '''
-    描述：加载cifar-10数据集，并且进行transformation
+    描述：加载cifar-100数据集，并且进行transformation
     参数：数据集位置，batch size
     返回：train loader，test loader
     '''

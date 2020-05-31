@@ -1,3 +1,7 @@
+'''
+训练测试nlp模型语言建模PTB的函数
+'''
+
 # coding: utf-8
 import argparse
 import time
@@ -10,7 +14,7 @@ import os.path as osp
 import time
 
 import constants
-import models.model_nlp
+import models.nlp_model
 import data.corpus_loader
 import algorithm.lookahead
 import algorithm.RAdam
@@ -62,7 +66,7 @@ def init_components(args):
     
     
     voc_size = data_loader.voc_size
-    model = models.model_nlp.LMModel(voc_size, 50, 50, 2)
+    model = models.nlp_model.LMModel(voc_size, 50, 50, 2)
     model = model.to(device)
 
     current_lr = constants.nlp_learning_rate

@@ -25,3 +25,17 @@ nlp_test_batch_size = 10
 nlp_learning_rate = 0.001
 nlp_epochs = 100
 nlp_data_dir = '../data/ptb'
+
+my_num_classes = 20
+my_data_dir = "../data/cnn_data/"
+my_input_size = 224
+my_batch_size = 36
+my_epochs = 100
+my_lr = 0.0001
+my_channel_0 = 96
+my_channel_1 = 128
+my_channel_2 = 256
+my_channel_3 = 8
+my_pooling_kernel = 2
+my_pooling_stride = 2
+

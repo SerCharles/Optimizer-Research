@@ -1,3 +1,7 @@
+'''
+描述：读取ptb数据集
+'''
+
 import os
 import torch
 

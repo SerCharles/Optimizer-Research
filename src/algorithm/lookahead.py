@@ -1,5 +1,8 @@
-from collections import defaultdict
+'''
+描述：队伍自己实现的lookahead算法
+'''
 
+from collections import defaultdict
 import torch
 from torch.optim.optimizer import Optimizer
 
@@ -25,9 +28,6 @@ class Lookahead(Optimizer):
                 self.state[p]['slow_weights'] = torch.zeros_like(p.data)
                 self.state[p]['slow_weights'].copy_(p.data)
     
-
-
-
     @property
     def param_groups(self):
         return self.optimizer.param_groups
@@ -41,6 +41,7 @@ class Lookahead(Optimizer):
             self.current_k = 0
             for group in self.optimizer.param_groups:
                 for p in group['params']:
+                    #本算法的核心代码
                     #slow = alpha*(fast - slow) + slow
                     #slow = alpha*fast + (1 - alpha)*slow
                     fast_weights = p.data

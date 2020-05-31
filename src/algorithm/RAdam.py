@@ -1,3 +1,7 @@
+'''
+描述：队伍自己实现的RAdam算法
+'''
+
 import torch
 import math
 from torch.optim.optimizer import Optimizer, required

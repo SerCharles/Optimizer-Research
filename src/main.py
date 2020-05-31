@@ -11,9 +11,10 @@ from torchvision.utils import make_grid
 from torchvision import datasets, transforms
 from models.cnn_model import ResNet18
 from models.imdb_model import LSTMNet
+from models.self_cnn_model import ModelCNN
 
 import constants
-import data.cifar10_loader, data.cifar100_loader, data.imdb_loader
+import data.cifar10_loader, data.cifar100_loader, data.imdb_loader, data.cnn_loader
 import algorithm.lookahead
 import algorithm.RAdam
 
@@ -28,7 +29,7 @@ def init_args():
     
     lookahead_options = [1, 0]
     
-    dataset_options = ['cifar10', 'cifar100', 'imdb']
+    dataset_options = ['cifar10', 'cifar100', 'imdb', 'self_cnn']
 
     #优化算法组合：RAdam + lookahead
     algorithm_options = ['SGD', 'Adam', 'RAdam']
@@ -44,6 +45,9 @@ def init_args():
     
     #衰减两种:快速，慢速
     decay_options = ['slow', 'fast']
+    
+    #batch选项
+    batch_options = [64, 128, 320]
 
     parser = argparse.ArgumentParser(description='CNN')
     parser.add_argument('--dataset', '-d', default='cifar10',
@@ -55,10 +59,12 @@ def init_args():
                         choices = lookahead_lr_options)
     parser.add_argument('--lookahead_steps' , type=int, default=5, help='The step k of lookahead(5 default)', \
         choices = lookahead_step_options)
-    parser.add_argument('--learning_rate','-lr', type=float, default=0.1, help='The learning rate (0.1 default)', 
+    parser.add_argument('--learning_rate','-lr', type=float, default=0.1, help='The learning rate (0.1 default), only applyable to cifar10/100', 
                         choices = lr_options)
     parser.add_argument('--lr_decay', default='slow', help='The learning rate decay strategy, slow(default) or fast', 
                         choices = decay_options)
+    parser.add_argument('--batch_size', type=int, default=128, help='The batch size of cifar10/100, default 128', 
+                        choices = batch_options)
     
     args = parser.parse_args()
     print(args)
@@ -85,20 +91,24 @@ def init_components(args):
 
     #data
     if(args.dataset == 'cifar10'):
-        train_loader, test_loader = data.cifar10_loader.load_data(data_dir = constants.data_dir, batch_size = constants.cnn_batch_size)
+        train_loader, test_loader = data.cifar10_loader.load_data(data_dir = constants.data_dir, batch_size = args.batch_size)
         num_classes = 10
     elif(args.dataset == 'cifar100'):
-        train_loader, test_loader = data.cifar100_loader.load_data(data_dir = constants.data_dir, batch_size = constants.cnn_batch_size)
+        train_loader, test_loader = data.cifar100_loader.load_data(data_dir = constants.data_dir, batch_size = args.batch_size)
         num_classes = 100
     elif(args.dataset == 'imdb'):
         train_loader, test_loader = data.imdb_loader.load_data()
         num_classes = 2
-        
+    elif(args.dataset == 'self_cnn'):
+        train_loader, test_loader = data.cnn_loader.load_data(data_dir = constants.my_data_dir, input_size = constants.my_input_size,\
+             batch_size = constants.my_batch_size)
     #model
     if(args.dataset == 'cifar10' or args.dataset == 'cifar100'):
         model = ResNet18(num_classes = num_classes)
     elif(args.dataset == 'imdb'):
         model = LSTMNet()
+    elif(args.dataset == 'self_cnn'):
+        model = ModelCNN(constants.my_num_classes, constants.my_input_size)
     model.to(device)
     
     #criterion
@@ -106,6 +116,7 @@ def init_components(args):
     
     #optimizer
     learning_rate = args.learning_rate
+
     if(args.dataset == 'cifar10' or args.dataset == 'cifar100'):
         if(args.algorithm == 'Adam'):
             optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate / 100,
@@ -118,12 +129,12 @@ def init_components(args):
                                 weight_decay=5e-4)
 
     elif(args.dataset == 'imdb'):
-        if(args.algorithm == 'Adam'):
-            optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate / 100)
-        elif(args.algorithm == 'SGD'):
-            optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
-        elif(args.algorithm == 'RAdam'):
-            optimizer = algorithm.RAdam.RAdam(model.parameters(), lr=learning_rate)
+        optimizer = algorithm.RAdam.RAdam(model.parameters(), lr=learning_rate)
+        
+    elif(args.dataset == 'self_cnn'):
+        learning_rate = constants.my_lr
+        optimizer = algorithm.RAdam.RAdam(model.parameters(), lr=learning_rate)
+
 
     if(args.lookahead == 1):
         optimizer = algorithm.lookahead.Lookahead(optimizer, args.lookahead_steps, args.lookahead_lr)
@@ -140,6 +151,8 @@ def init_components(args):
         epochs = constants.cnn_epochs
     elif(args.dataset == 'imdb'):
         epochs = constants.imdb_epochs
+    elif(args.dataset == 'self_cnn'):
+        epochs = constants.my_epochs
     return device, model, train_loader, test_loader, criterion, optimizer, scheduler, epochs
 
 

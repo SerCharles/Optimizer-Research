@@ -1,3 +1,7 @@
+'''
+描述：自己hw3的rnn模型，用于训练ptb数据
+'''
+
 import torch
 import torch.nn as nn
 import math
