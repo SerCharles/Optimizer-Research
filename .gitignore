@@ -7,9 +7,6 @@ __pycache__/
 *.so
 
 # data
-/data/
-/results/
-/src/runs/
 
 # Distribution / packaging
 .Python

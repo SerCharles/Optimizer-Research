@@ -179,9 +179,9 @@ if __name__ == '__main__':
     PlotAblation.append(Ranger)
     
     PlotBatch = []
-    Batch2 = {"model_name":"2 steps, 320 batchs", "model_dir":"adam_yes_2_320"}
-    Batch5 = {"model_name":"5 steps, 128 batchs", "model_dir":"adam_yes"}
-    Batch10 = {"model_name":"10 steps, 64 batchs", "model_dir":"adam_yes_10_64"}
+    Batch2 = {"model_name":"2 steps, 320 batchs", "model_dir":"radam_yes_2_320"}
+    Batch5 = {"model_name":"5 steps, 128 batchs", "model_dir":"radam_yes"}
+    Batch10 = {"model_name":"10 steps, 64 batchs", "model_dir":"radam_yes_10_64"}
     PlotBatch.append(Batch2)
     PlotBatch.append(Batch5)
     PlotBatch.append(Batch10)
@@ -195,7 +195,7 @@ if __name__ == '__main__':
 
     Plot001100 = []
     RAdam001100 = {"model_name":"RAdam", "model_dir":"radam_no_001_cifar100"}
-    Ranger001100 = {"model_name":"Ranger", "model_dir":"radam_yes_03_cifar100"}
+    Ranger001100 = {"model_name":"Ranger", "model_dir":"radam_yes_001_cifar100"}
     Plot001100.append(RAdam001100)
     Plot001100.append(Ranger001100)
     
@@ -230,9 +230,9 @@ if __name__ == '__main__':
     PlotAblation100.append(Ranger100)
 
     PlotBatch100 = []
-    Batch2100 = {"model_name":"2 steps, 320 batchs", "model_dir":"adam_yes_2_320_cifar100"}
-    Batch5100 = {"model_name":"5 steps, 128 batchs", "model_dir":"adam_yes_cifar100"}
-    Batch10100 = {"model_name":"10 steps, 64 batchs", "model_dir":"adam_yes_10_64_cifar100"}
+    Batch2100 = {"model_name":"2 steps, 320 batchs", "model_dir":"radam_yes_2_320_cifar100"}
+    Batch5100 = {"model_name":"5 steps, 128 batchs", "model_dir":"radam_yes_cifar100"}
+    Batch10100 = {"model_name":"10 steps, 64 batchs", "model_dir":"radam_yes_10_64_cifar100"}
     PlotBatch100.append(Batch2100)
     PlotBatch100.append(Batch5100)
     PlotBatch100.append(Batch10100)
@@ -356,3 +356,6 @@ if __name__ == '__main__':
         PlotCurves(PlotCNN, 'loss', 'The train loss contrast on hw2 Image set and model.')
     elif num == '401':
         PlotCurves(PlotCNN, 'accuracy', 'The test accuracy contrast on hw2 Image set and model.')
+    else:
+        print("Invalid order, failure!")    
+    print("Program finish, please use tensorboard to get the result.")

@@ -38,7 +38,7 @@ def init_args():
     lr_options = [0.1, 0.01]
     
     #lookahead步数2种：5,10
-    lookahead_step_options = [5, 10]
+    lookahead_step_options = [2, 5, 10]
     
     #lookahead lr 2种：0.8, 0.5
     lookahead_lr_options = [0.5, 0.8]
