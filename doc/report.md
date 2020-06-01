@@ -1,5 +1,5 @@
 ---
-typora-root-url: ..\results\picture
+typora-root-url: ..
 ---
 
 ### 1.实验部分
@@ -67,19 +67,19 @@ typora-root-url: ..\results\picture
 
 ##### 实验结果
 
-![cifar10_base_loss](/cifar10_base_loss.png)
+![cifar10_base_loss](/results/picture/cifar10_base_loss.png)
 
 在cifar10下，比较两者训练时的损失函数，使用lookahead的Ranger算法明显比只有RAdam收敛的快。
 
-![cifar10_base_acc](/cifar10_base_acc.png)
+![cifar10_base_acc](/results/picture/cifar10_base_acc.png)
 
 而对比两者收敛后的准确率，并没有明显变化。
 
-![cifar100_base_loss](/cifar100_base_loss.png)
+![cifar100_base_loss](/results/picture/cifar100_base_loss.png)
 
 而在cifar100中，使用lookahead的收敛更加快速，效果更加明显。
 
-![cifar100_base_acc](/cifar100_base_acc.png)
+![cifar100_base_acc](/results/picture/cifar100_base_acc.png)
 
 而且因为收敛效果好，准确率也提高了。
 
@@ -155,19 +155,19 @@ tensorboard --logdir runs/101
 
 ##### 实验结果
 
-![cifar10_param_loss](/../../../DL%20Optimizer%20Research/results/picture/cifar10_param_loss.png)
+![cifar10_param_loss](/results/picture/cifar10_param_loss.png)
 
 可以看出，在cifar10下，无论是哪组超参数，其优化速率都要快于没有lookahead。
 
-![cifar10_param_acc](/../../../DL%20Optimizer%20Research/results/picture/cifar10_param_acc.png)
+![cifar10_param_acc](/results/picture/cifar10_param_acc.png)
 
 而无论是哪组超参数，都不会造成准确率的下降。
 
-![](/../../../DL%20Optimizer%20Research/results/picture/cifar100_param_loss.png)
+![](/results/picture/cifar100_param_loss.png)
 
 在cifar100下，结论也是如此，而且优化效果更加明显。
 
-![cifar100_batch_acc](/../../../DL%20Optimizer%20Research/results/picture/cifar100_param_acc.png)
+![cifar100_batch_acc](/results/picture/cifar100_param_acc.png)
 
 而且，几种超参数都能带来准确率的明显提升。
 
@@ -265,19 +265,19 @@ tensorboard --logdir runs/131
 
 首先，我们控制其他不变，把学习率修改为0.01。在cifar10下，两者train loss变化如下：
 
-![cifar10_001_loss](/cifar100_001_loss.png)
+![cifar10_001_loss](/results/picture/cifar100_001_loss.png)
 
 此时，lookahead并没有对RAdam进行明显的优化。
 
-![cifar10_001_acc](/cifar10_001_acc.png)
+![cifar10_001_acc](/results/picture/cifar10_001_acc.png)
 
 而对比两者收敛后的准确率，并没有明显变化。
 
-![cifar100_001_loss](/cifar100_001_loss.png)
+![cifar100_001_loss](/results/picture/cifar100_001_loss.png)
 
 而在cifar100下，lookahead对RAdam的优化就更明显一点
 
-![cifar100_001_acc](/cifar100_001_acc.png)
+![cifar100_001_acc](/results/picture/cifar100_001_acc.png)
 
 而且，在准确率上，使用lookahead还能带来一些提高。
 
@@ -332,7 +332,7 @@ tensorboard --logdir runs/011
 cifar100的train loss对比
 
 ```shell
-![cifar10_fast_loss](/cifar10_fast_loss.png)tensorboard --logdir runs/110
+tensorboard --logdir runs/110
 ```
 
 cifar100的test accuracy对比
@@ -345,19 +345,19 @@ tensorboard --logdir runs/111
 
 之后，我们控制其他不变，把学习率衰减方式修改为快速衰减---在30,48,58 epoch的时候下降至原来的0.2倍。在cifar10下，两者train loss变化如下：
 
-![cifar10_fast_loss](/cifar10_fast_loss.png)
+![cifar10_fast_loss](/results/picture/cifar10_fast_loss.png)
 
 此时，使用lookahead的效果反而还差一些
 
-![cifar10_fast_acc](/../../../DL%20Optimizer%20Research/results/picture/cifar10_fast_acc.png)
+![cifar10_fast_acc](/results/picture/cifar10_fast_acc.png)
 
 即使两者准确率没有明显变化
 
-![cifar100_fast_loss](/../../../DL%20Optimizer%20Research/results/picture/cifar100_fast_loss.png)
+![cifar100_fast_loss](/results/picture/cifar100_fast_loss.png)
 
 而在cifar100下，使用lookahead就仍旧能明显改进RAdam的性能。
 
-![cifar100_fast_acc](/../../../DL%20Optimizer%20Research/results/picture/cifar100_fast_acc.png)
+![cifar100_fast_acc](/results/picture/cifar100_fast_acc.png)
 
 而且使用lookahead在准确率上也能带来一些提高。
 
@@ -434,19 +434,19 @@ tensorboard --logdir runs/121
 - RAdam学习率 0.1
 - 其余超参数同上，且都保持一致
 
-![cifar10_ablation_loss](/cifar10_ablation_loss.png)
+![cifar10_ablation_loss](/results/picture/cifar10_ablation_loss.png)
 
 首先，对比cifar10下的train loss，可以看出，lookahead的确能优化Adam和RAdam，但是对SGD的优化并不明显。而且，在此问题下，SGD > Adam > RAdam。
 
-![cifar10_ablation_acc](/cifar10_ablation_acc.png)
+![cifar10_ablation_acc](/results/picture/cifar10_ablation_acc.png)
 
 而对比此时的accuracy，差异并不明显，使用lookahead并不会降低准确率。
 
-![cifar100_ablation_loss](/cifar100_ablation_loss.png)
+![cifar100_ablation_loss](/results/picture/cifar100_ablation_loss.png)
 
 而在cifar100下，lookahead能同时加速这三个优化算法，而且即使SGD算法本身效果并不好，使用lookahead后效果也非常好。
 
-![cifar100_ablation_acc](/cifar100_ablation_acc.png)
+![cifar100_ablation_acc](/results/picture/cifar100_ablation_acc.png)
 
 此时，对于Adam，使用lookahead不会降低准确率，而其他两种算法的lookahead都能提升准确率。
 
@@ -574,13 +574,13 @@ tensorboard --logdir runs/141
 
 //TODO 解释
 
-![cifar10_batch_loss](/cifar10_batch_loss.png)
+![cifar10_batch_loss](/results/picture/cifar10_batch_loss.png)
 
-![cifar10_batch_acc](/cifar10_batch_acc.png)
+![cifar10_batch_acc](/results/picture/cifar10_batch_acc.png)
 
-![cifar100_batch_loss](/cifar100_batch_loss.png)
+![cifar100_batch_loss](/results/picture/cifar100_batch_loss.png)
 
-![cifar100_batch_acc](/cifar100_batch_acc.png)
+![cifar100_batch_acc](/results/picture/cifar100_batch_acc.png)
 
 ##### 实验复现方法
 
@@ -671,11 +671,11 @@ tensorboard --logdir runs/151
 
 ##### 实验结果
 
-![hw2_loss](/hw2_loss.png)
+![hw2_loss](/results/picture/hw2_loss.png)
 
 此时，lookahead并没有有效优化RAdam
 
-![hw2_acc](/hw2_acc.png)
+![hw2_acc](/results/picture/hw2_acc.png)
 
 而准确率两者差不多
 
@@ -722,11 +722,11 @@ tensorboard --logdir runs/401
 
 ##### 实验结果
 
-![nlp_train](/../../../DL%20Optimizer%20Research/results/picture/nlp_train.png)
+![nlp_train](/results/picture/nlp_train.png)
 
 此时，lookahead并没有有效优化RAdam
 
-![hw2_acc](/../../../DL%20Optimizer%20Research/results/picture/nlp_test.png)
+![hw2_acc](/results/picture/nlp_test.png)
 
 而结果两者差不多
 
@@ -775,11 +775,11 @@ tensorboard --logdir runs/201
 
 ##### 实验结果
 
-![nlp_train](/imdb_loss.png)
+![nlp_train](/results/picture/imdb_loss.png)
 
 此时，lookahead并没有有效优化RAdam
 
-![hw2_acc](/imdb_acc.png)
+![hw2_acc](/results/picture/imdb_acc.png)
 
 而结果两者差不多
 
