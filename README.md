@@ -1,5 +1,5 @@
 ---
-typora-root-url: results\picture
+typora-root-url: results/picture
 ---
 
 ### 1.实验部分
