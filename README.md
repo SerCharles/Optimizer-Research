@@ -628,3 +628,14 @@ test accuracy对比
 tensorboard --logdir runs/301
 ```
 
+
+
+### 4 分工说明
+
+沈冠霖：lookahead实现和主体实验
+
+邱中昱：RAdam实现
+
+武笑石：文献调研，实验设计，报告撰写，展示
+
+陈俣策：文献调研和报告撰写
