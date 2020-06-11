@@ -1,825 +1,303 @@
 ---
-typora-root-url: ..
+
 ---
 
-### 1.实验部分
+# Lookahead Optimizer 复现报告
 
-#### 1.1 目录结构
+沈冠霖  武笑石  邱中昱  陈俣策
 
-/src 源代码所在位置
+### 摘要
 
-​		/src/main.py 主体的训练，测试代码
+我们小组复现了发表在NeurIPS 2019上的论文[Lookahead Optimizer: k steps forward, 1 step back](https://arxiv.org/pdf/1907.08610.pdf)。这篇论文介绍了一种新型的优化器设计方法。我们在论文中用到的数据集上验证了该方法的性能、鲁棒性、进行一些个性化的探究性实验，此外，我们在多种不同任务上对该方法的可拓展性进行了实验。
 
-​		/src/main_nlp.py 语言建模的训练，测试代码
+### 1.  简介
 
-​		/src/constants.py 常量
+#### 1.2  算法思想
 
-​		/src/plot.py 结果可视化相关代码
+Lookahead Optimizer的核心思想来源于上世纪凸优化领域的研究。在凸优化领域中，人们发现当把训练不同阶段的权重加权平均后，往往可以取得更低的训练误差。[Lookahead Optimizer: k steps forward, 1 step back](https://arxiv.org/pdf/1907.08610.pdf)中将这一研究结果拓展到了深度学习的非凸优化问题中，取得了相对理想的效果。本报告将着重于展示我们小组的复现结果，如果需要更多理论上的阐释，请参考论文原文。
 
-​		/src/algorithm 我们自己实现的RAdam和lookahead
+从算法结构而言，Lookahead Optimizer本质上是一个优化器的优化器。Lookahead Optimizer的运行需要一个其他的优化器，例如Adam等，在后文中我们将称之为内层优化器。与之相对应的外层优化器则是Lookahead Optimizer着重实现的部分。算法的实现方法可以大致描述为：内层优化器每运行k个iter，得到参数更新总量为dW，外层优化器更新α * dW。下图是该方法的一种直观表达。
 
-​		/src/data 几种不同数据集的数据读取和预处理位置
+![可视化](..\results\insight.png)
 
-​		/src/models 几种不同问题对应模型的读取位置
 
-/results 实验结果所在位置
 
-​		/results/text 实验结果的txt文档
+#### 1.3  实验环境
 
-​		/results/runs 实验结果的tensorboard可视化文件
+​		实验使用的操作系统和python库如下：
 
-​		/results/picture 实验图片结果
+- 操作系统：Ubuntu  18.04
+- python  3.6.9
+- pytorch  1.4.0
+- numpy  1.18.4
+- torchvision  0.5.0
+- tensorboard  1.14.0
+- keras  2.3.1
 
-/data 实验数据所在位置
 
-​		/data/cifar-10-batches-py  cifar10数据
 
-​		/data/cifar-100-python  cifar100数据
+### 2.  实验结果
 
-​		/data/cnn_data  作业2的部分ImageNet图片数据
 
-​		/data/ptb  作业3的语言建模数据
 
-​		IMDB数据会自动下载
+#### 2.1  基本性能比较
 
-#### 1.2 实验环境
+​		在本实验中，我们以RAdam为baseline，验证了Lookahead算法的有效性。测试方法和参数选取如下：
 
-- ubuntu 18.04系统
-- python 3.6.9
-- pytorch 1.4.0
-- numpy 1.18.4
-- torchvision 0.5.0
-- tensorboard 1.14.0
-- keras 2.3.1 
+- 数据集： cifar10， cifar100
+- 网络模型： Resnet18
+- 学习率及衰减策略：初始 learning_rate = 0.1，无预训练，在第60,120,160 epoch时降为原值0.2倍
 
-#### 1.3 基本实验
-
-我们对RAdam和Ranger(RAdam + lookahead)在cifar10，cifar100的效果进行了对比。两者RAdam的超参数和网络其他情况完全一致。
-
-##### 超参数等
-
-- 网络：Resnet18，从零开始训练
-- 学习率：初始0.1
-- 学习率衰减：在60,120,160epoch的时候下降至原来的0.2倍
 - weight decay：5e-4
-- lookahead步长k：5
-- lookahead内部学习率alpha：0.8
 
-##### 实验结果
+- Lookahead参数：步长k=5，外层参数更新率α=0.8
 
-![cifar10_base_loss](/results/picture/cifar10_base_loss.png)
+  
 
-在cifar10下，比较两者训练时的损失函数，使用lookahead的Ranger算法明显比只有RAdam收敛的快。
+  在cifar10数据集上训练和测试时，train_loss 和 test_accuracy 曲线如下：
 
-![cifar10_base_acc](/results/picture/cifar10_base_acc.png)
+  ![cifar10_base_loss](..\results\picture\cifar10_base_loss.png)
 
-而对比两者收敛后的准确率，并没有明显变化。
+  ![cifar10_base_acc](..\results\picture\cifar10_base_acc.png)
 
-![cifar100_base_loss](/results/picture/cifar100_base_loss.png)
+  
 
-而在cifar100中，使用lookahead的收敛更加快速，效果更加明显。
+  在cifar100数据集上训练和验证时，train_loss 和 test_accuracy 曲线如下：
 
-![cifar100_base_acc](/results/picture/cifar100_base_acc.png)
+  ![cifar100_base_loss](..\results\picture\cifar100_base_loss.png)
 
-而且因为收敛效果好，准确率也提高了。
+  ![cifar100_bass_acc](..\results\picture\cifar100_bass_acc.png)
 
-可以看出，lookahead可以对RAdam的收敛速度进行优化，而且不影响，甚至有利于提高准确率。
 
-##### 实验复现方法
 
-(注：以下实验均运行在src目录下)
+​		由以上图表可以得出以下结果：
 
-cifar10：
+- **Lookahead+RAdam的收敛速度比RAdam快，在cifar100上的效果比cifar10更明显**
 
-Ranger(RAdam + lookahead):
+- **在cifar10上，两者的准确率相当；但在cifar100上，Lookahead+RAdam的准确率明显高于RAdam**
 
-```shell
-python main.py
-```
+  **综上所述，Lookahead方法在cifar-10/100上有效。**
 
-RAdam:
+  
 
-```shell
-python main.py --lookahead 0
-```
+#### 2.2  对超参数鲁棒
 
-cifar100:
+​		本实验中，我们对Lookahead中的两个超参数 （1）步长k（2）外部参数更新率α 进行鲁棒性测试，探究参数取值的不同是否会影响Ranger优化器的性能，实验中采用了三种取值：
 
-Ranger(RAdam + lookahead):
+- 与2.1 baseline相同： k=5,  α=0.8
+- 增大k值：  k=10,  α=0.8
+- 减小α值： k=5,  α=0.5
 
-```shell
-python main.py --dataset cifar100
-```
+​		将这三种情况的实验结果与2.1中RAdam的baseline进行比较，作出4条曲线
 
-RAdam:
+​		在cifar10数据集上训练和测试时，train_loss 和 test_accuracy 曲线如下：
 
-```shell
-python main.py --dataset cifar100 --lookahead 0
-```
+![cifar10_param_loss](..\results\picture\cifar10_param_loss.png)
 
-##### 可视化复现方法
+![cifar10_param_acc](..\results\picture\cifar10_param_acc.png)
 
-（注：以下可视化均运行在results目录下）
 
-cifar10的train loss对比
 
-Ranger(RAdam + lookahead):
+​		在cifar100数据集上训练和验证时，train_loss 和 test_accuracy 曲线如下：
 
-```shell
-tensorboard --logdir runs/000
-```
+![cifar100_param_loss](..\results\picture\cifar100_param_loss.png)
 
-cifar10的test accuracy对比
+![cifar100_param_acc](..\results\picture\cifar100_param_acc.png)
 
-```shell
-tensorboard --logdir runs/001
-```
 
-cifar100的train loss对比
 
-```shell
-tensorboard --logdir runs/100
-```
+​		由以上图表可以得出以下结果：
 
-cifar100的test accuracy对比
+- **无论参数的取值如何，Lookahead的优化速率均快于RAdam，在cifar100上的效果更加明显**
+- **在cifar10上，优化器的准确率相当；但在cifar100上，无论Lookahead的参数如何，准确率均明显高于RAdam**
 
-```shell
-tensorboard --logdir runs/101
-```
+​		**实验取得了与2.1相同的结果，说明Lookahead优化器的鲁棒性良好。**
 
 
 
-#### 1.4 参数鲁棒性实验
+#### 2.3  对学习率鲁棒
 
-因为lookahead有两个超参数：内部步数k和内部学习率alpha，为了验证lookahead对RAdam优化的鲁棒性，我们对于几组不同的k和内部学习率alpha进行了实验。
+​		本实验中，我们为了探究学习率的改变对 lookahead 优化 RAdam 的效果的影响，选取了不同的学习率取值和学习率衰减方式进行实验，比较性能变化情况
 
-##### 实验结果
+##### 2.3.1  学习率设置 
 
-![cifar10_param_loss](/results/picture/cifar10_param_loss.png)
+​		首先，降低学习率 learning_rate = 0.01 (baseline  learning_rate = 0.1)
 
-可以看出，在cifar10下，无论是哪组超参数，其优化速率都要快于没有lookahead。
+​		在cifar10数据集上训练和测试时，train_loss 和 test_accuracy 曲线如下：
 
-![cifar10_param_acc](/results/picture/cifar10_param_acc.png)
+![cifar10_001_loss](..\results\picture\cifar10_001_loss.png)
 
-而无论是哪组超参数，都不会造成准确率的下降。
+![cifar10_001_acc](..\results\picture\cifar10_001_acc.png)
 
-![](/results/picture/cifar100_param_loss.png)
 
-在cifar100下，结论也是如此，而且优化效果更加明显。
 
-![cifar100_batch_acc](/results/picture/cifar100_param_acc.png)
+​		在cifar100数据集上训练和测试时，train_loss 和 test_accuracy 曲线如下：
 
-而且，几种超参数都能带来准确率的明显提升。
+![cifar100_001_loss](..\results\picture\cifar100_001_loss.png)
 
-##### 实验复现方法
+![cifar100_001_acc](..\results\picture\cifar100_001_acc.png)
 
-(注：以下实验均运行在src目录下)
 
-cifar10：
 
-Ranger（标准超参数 alpha = 0.8, k = 5)
+​		由以上图表可以得出以下结果：
 
-```shell
-python main.py
-```
+- **在cifar10上，两者的loss和accuracy相当，lookahead并没有明显的优化效果**
+- **在cifar100上，Lookahead对RAdam有优化效果，收敛速度和准确率都有所提升**
 
-Ranger（alpha = 0.5)
 
-```shell
-python main.py --lookahead_lr 0.5
-```
 
-Ranger（k = 10)
+##### 2.3.2  学习率衰减
 
-```shell
-python main.py --lookahead_steps 10
-```
+​		其次，加快学习率衰减速度，baseline中在第60,120,160 epoch时降为原值0.2倍，此处改为在第30,48,58 epoch时降为原值0.2倍
 
-RAdam:
+​		在cifar10数据集上训练和测试时，train_loss 和 test_accuracy 曲线如下：
 
-```shell
-python main.py --lookahead 0
-```
+![cifar10_fast_loss](..\results\picture\cifar10_fast_loss.png)
 
-cifar100:
+![cifar10_fast_acc](..\results\picture\cifar10_fast_acc.png)
 
-Ranger（标准超参数 alpha = 0.8, k = 5)
 
-```shell
-python main.py --dataset cifar100
-```
 
-Ranger（alpha = 0.5)
+​		在cifar100数据集上训练和测试时，train_loss 和 test_accuracy 曲线如下：
 
-```shell
-python main.py --lookahead_lr 0.5 --dataset cifar100
-```
+![cifar100_fast_loss](..\results\picture\cifar100_fast_loss.png)
 
-Ranger（k = 10)
+![cifar100_fast_acc](..\results\picture\cifar100_fast_acc.png)
 
-```shell
-python main.py --lookahead_steps 10 --dataset cifar100
-```
 
-RAdam:
 
-```shell
-python main.py --lookahead 0 --dataset cifar100
-```
+​		由以上图表可以得出以下结果：
 
-###### 可视化复现方法
+- **在cifar10上，两者准确率相当，lookahead甚至会使得loss收敛速度减慢**
 
-（注：以下可视化均运行在results目录下）
+- **在cifar100上，lookahead可以显著加快收敛速度和提升准确率，对RAdam的优化性能较好**
 
-cifar10的train loss对比
+  **由以上两个实验可以得出，调整 lookahead 的超参数的效果是因数据集而异的**
 
-```shell
-tensorboard --logdir runs/030
-```
 
-cifar10的test accuracy对比
 
-```shell
-tensorboard --logdir runs/031
-```
+#### 2.4  Lookahead + other optimizer
 
-cifar100的train loss对比
+​		lookahead可以与RAdam组成Ranger优化器，同样可以与SGD，Adam等其它优化器组合，本实验对比了以下三种优化器组合的性能，lookahead的参数与baseline保持一致：
 
-```shell
-tensorboard --logdir runs/130
-```
+- lookahead + SGD (learning_rate = 0.1)
+- lookahead + Adam (learning_rate = 0.001)
+- lookahead + RAdam (learning_rate = 0.1)
 
-cifar100的test accuracy对比
 
-```shell
-tensorboard --logdir runs/131
-```
 
+​		再与三种优化器未加lookahead时进行比较，作出6条曲线。在cifar10数据集上训练和测试时，train_loss 和 test_accuracy 曲线如下：
 
+![cifar10_ablation_loss](..\results\picture\cifar10_ablation_loss.png)
 
-#### 1.5 超参数修改实验
+![cifar10_ablation_acc](..\results\picture\cifar10_ablation_acc.png)
 
-为了探究在什么条件下lookahead能有效优化RAdam，我们选取了不同的学习率，学习率衰减方式作为条件，对比RAdam与Ranger的性能。
 
-##### 1.5.1 学习率变化
 
-首先，我们控制其他不变，把学习率修改为0.01。在cifar10下，两者train loss变化如下：
+​		在cifar100数据集上训练和测试时，train_loss 和 test_accuracy 曲线如下：
 
-![cifar10_001_loss](/results/picture/cifar100_001_loss.png)
+![cifar100_ablation_loss](..\results\picture\cifar100_ablation_loss.png)
 
-此时，lookahead并没有对RAdam进行明显的优化。
+![cifar100_ablation_acc](..\results\picture\cifar100_ablation_acc.png)
 
-![cifar10_001_acc](/results/picture/cifar10_001_acc.png)
 
-而对比两者收敛后的准确率，并没有明显变化。
 
-![cifar100_001_loss](/results/picture/cifar100_001_loss.png)
+​		由以上图表可以得出以下结果：
 
-而在cifar100下，lookahead对RAdam的优化就更明显一点
+- **在cifar10上，对比 train_loss，各优化器的收敛速度从快到慢为：SGD > Adam > RAdam，lookahead 对 Adam, RAdam 的优化效果较好，但对SGD的优化效果并不明显；各组的test_accuracy 差别并不大**
+- **在cifar100上，对比 train_loss，各优化器的收敛速度从快到慢为：Adam > RAdam, SGD，加上lookahead对三种优化器均有优化效果，其中对 SGD 的优化效果最明显；对比 test_accuracy，lookahead 对 Adam 提升效果不明显，但对 RAdam, SGD 均有提升**
 
-![cifar100_001_acc](/results/picture/cifar100_001_acc.png)
 
-而且，在准确率上，使用lookahead还能带来一些提高。
 
-##### 实验复现方法
+#### 2.5  性能提升是否来源于batch size的提升？
 
-(注：以下实验均运行在src目录下)
+​		我们注意到，k值越高意味着外层参数更新一次所依赖的batch数越多，因此我们猜测Lookahead的性能提升本质上来源于更高的batch size。如果确实如此，那么该论文的性能提升恐怕难以成立。因此，在本实验中，我们的尝试改变lookahead的参数 batch 和 k 的取值，以对我们的猜测进行验证。我们选取以下三种取值组合进行测试，注意到batch_size * k恒为640：
 
-cifar10：
+- k = 5,  batch = 128
+- k = 2,  batch = 320
+- k = 10,  batch = 64
 
-Ranger(RAdam + lookahead):
 
-```shell
-python main.py --learning_rate 0.01
-```
 
-RAdam:
 
-```shell
-python main.py --learning_rate 0.01 --lookahead 0
-```
 
-cifar100:
+​		在cifar10数据集上训练和测试时，train_loss 和 test_accuracy 曲线如下：
 
-Ranger(RAdam + lookahead):
+![cifar10_batch_loss](..\results\picture\cifar10_batch_loss.png)
 
-```shell
-python main.py --learning_rate 0.01 --dataset cifar100
-```
+![cifar10_batch_acc](..\results\picture\cifar10_batch_acc.png)
 
-RAdam:
 
-```shell
-python main.py --learning_rate 0.01 --dataset cifar100 --lookahead 0
-```
 
-##### 可视化复现方法
+​		在cifar100数据集上训练和测试时，train_loss 和 test_accuracy 曲线如下：
 
-（注：以下可视化均运行在results目录下）
+![cifar100_batch_loss](..\results\picture\cifar100_batch_loss.png)
 
-cifar10的train loss对比
+![cifar100_batch_acc](..\results\picture\cifar100_batch_acc.png)
 
-```shell
-tensorboard --logdir runs/010
-```
 
-cifar10的test accuracy对比
 
-```shell
-tensorboard --logdir runs/011
-```
+​		由以上图表可以看出，虽然batch_size * k为常量，但各组实验的表现却有较大的差别，说明Lookahead的性能提升并非来源于更大的batch_size，因此论文的性能提高是成立的。
 
-cifar100的train loss对比
 
-```shell
-tensorboard --logdir runs/110
-```
 
-cifar100的test accuracy对比
+#### 2.6  其他任务/模型上的测试
 
-```shell
-tensorboard --logdir runs/111
-```
+​		本实验中，在不同的网络模型和数据集下对比 Lookahead的性能提升，选取了两个任务
 
-##### 1.5.2 学习率衰减方式变化
+##### 2.6.1  hw2  image classification
 
-之后，我们控制其他不变，把学习率衰减方式修改为快速衰减---在30,48,58 epoch的时候下降至原来的0.2倍。在cifar10下，两者train loss变化如下：
+​		在第二次课程作业给出的数据集上进行图像分类任务测试，模型和参数如下：
 
-![cifar10_fast_loss](/results/picture/cifar10_fast_loss.png)
+- 网络模型：三层CNN网络
+- 学习率： learning_rate = 0.0001，without decay
+- lookahead参数： 内部步长k = 5，内部学习率 α = 0.8
 
-此时，使用lookahead的效果反而还差一些
+​        在hw2数据集上训练和测试时，train_loss 和 test_accuracy 曲线如下：
 
-![cifar10_fast_acc](/results/picture/cifar10_fast_acc.png)
+![hw2_loss](..\results\picture\hw2_loss.png)
 
-即使两者准确率没有明显变化
+![hw2_acc](..\results\picture\hw2_acc.png)
 
-![cifar100_fast_loss](/results/picture/cifar100_fast_loss.png)
+​		
 
-而在cifar100下，使用lookahead就仍旧能明显改进RAdam的性能。
+​		**由以上图表可以得出，使用两优化器的收敛速度和准确率相差不多，说明在此任务中 lookahead 并没有有效优化 RAdam**
 
-![cifar100_fast_acc](/results/picture/cifar100_fast_acc.png)
 
-而且使用lookahead在准确率上也能带来一些提高。
 
-##### 实验复现方法
+##### 2.6.2  hw3  language model
 
-(注：以下实验均运行在src目录下)
+​		在第三次课程作业给出的数据集上进行语言模型预测测试，模型和参数如下：
 
-cifar10：
+- 网络模型：2层单向GRU网络
 
-Ranger(RAdam + lookahead):
+- 学习率： learning_rate = 0.001，without decay
 
-```shell
-python main.py --lr_decay fast
-```
+- lookahead参数： 内部步长k = 5，内部学习率 α = 0.8
 
-RAdam:
+  在hw3数据集上训练和测试时，train_perplexity 和 test_perplexity 曲线如下：
 
-```shell
-python main.py --lr_decay fast --lookahead 0
-```
+![nlp_train](..\results\picture\nlp_train.png)
 
-cifar100:
+![nlp_test](..\results\picture\nlp_test.png)
 
-Ranger(RAdam + lookahead):
 
-```shell
-python main.py --lr_decay fast --dataset cifar100
-```
 
-RAdam:
+​		**由以上图表可以得出，使用两优化器的收敛速度和准确率相差不多，说明在此任务中 lookahead 并没有有效优化 RAdam**
 
-```shell
-python main.py --lr_decay fast --dataset cifar100 --lookahead 0
-```
 
-##### 可视化复现方法
 
-（注：以下可视化均运行在results目录下）
+### 3.  总结
 
-cifar10的train loss对比
+我们通过复现验证了论文中提到的部分观点，对Lookahead Optimizer的有效性、鲁棒性进行了验证。此外，我们对性能提升的来源进行了探究，间接证实了论文中关于性能提升原因的相关论述。然而，通过在其他任务上的实验，我们也发现了该方法并不能够在所有任务上都取得性能提升，甚至在许多我们测试过的任务上都没有取得性能提升，说明这个方法或许存在较大的局限性。关于性能没有提升的原因，虽然没有理论支撑，但通过经验我们分析可能与数据集规模有关。根据我们以上展示的实验结果，可以发现当数据集规模较大、复杂度较高（cifar-100）时，Lookahead能够取得的效果非常明显，而复杂度降低到作业数据集时，性能提升就接近于0了。
 
-```shell
-tensorboard --logdir runs/020
-```
 
-cifar10的test accuracy对比
+如果从使用者的角度对Lookahead方法进行感性的评价，Lookahead最大的特点是对超参数非常鲁棒，因此如果是为了验证一个idea，用Lookahead的好处在于实验初期可以减少超参数上的时间投入，利用相对粗糙的超参数获得相对准确的实验结果。然而Lookahead的性能提升在不同数据集上并不稳定，因此实际使用中还是应当具体问题具体分析，比较后选择最好的优化器，以跑出最好的结果。
 
-```shell
-tensorboard --logdir runs/021
-```
+### 4.  Reference
 
-cifar100的train loss对比
+[1]  lookahead source code:  https://github.com/michaelrzhang/lookahead
 
-```shell
-tensorboard --logdir runs/120
-```
+[2]  cifar10/100 dataset:  https://github.com/uoguelph-mlrg/Cutout/blob/master/train.py
 
-cifar100的test accuracy对比
-
-```shell
-tensorboard --logdir runs/121
-```
-
-##### 
-
-#### 1.6 对比实验
-
-既然Ranger优化器是lookahead和RAdam组合而成的，而且lookahead也可以组合SGD,Adam等其他优化器，因此，我们做了相应的对比实验。
-
-##### 超参数等
-
-- SGD学习率 0.1
-- Adam学习率 0.001
-- RAdam学习率 0.1
-- 其余超参数同上，且都保持一致
-
-![cifar10_ablation_loss](/results/picture/cifar10_ablation_loss.png)
-
-首先，对比cifar10下的train loss，可以看出，lookahead的确能优化Adam和RAdam，但是对SGD的优化并不明显。而且，在此问题下，SGD > Adam > RAdam。
-
-![cifar10_ablation_acc](/results/picture/cifar10_ablation_acc.png)
-
-而对比此时的accuracy，差异并不明显，使用lookahead并不会降低准确率。
-
-![cifar100_ablation_loss](/results/picture/cifar100_ablation_loss.png)
-
-而在cifar100下，lookahead能同时加速这三个优化算法，而且即使SGD算法本身效果并不好，使用lookahead后效果也非常好。
-
-![cifar100_ablation_acc](/results/picture/cifar100_ablation_acc.png)
-
-此时，对于Adam，使用lookahead不会降低准确率，而其他两种算法的lookahead都能提升准确率。
-
-##### 实验复现方法
-
-(注：以下实验均运行在src目录下)
-
-cifar10：
-
-Ranger(RAdam + lookahead):
-
-```shell
-python main.py
-```
-
-RAdam:
-
-```shell
-python main.py --lookahead 0
-```
-
-Adam + lookahead:
-
-```shell
-python main.py --algorithm Adam
-```
-
-Adam:
-
-```shell
-python main.py --algorithm Adam --lookahead 0
-```
-
-SGD + lookahead:
-
-```shell
-python main.py --algorithm SGD
-```
-
-SGD:
-
-```shell
-python main.py --algorithm SGD --lookahead 0
-```
-
-cifar100:
-
-Ranger(RAdam + lookahead):
-
-```shell
-python main.py --dataset cifar100
-```
-
-RAdam:
-
-```shell
-python main.py --lookahead 0 --dataset cifar100
-```
-
-Adam + lookahead:
-
-```shell
-python main.py --algorithm Adam --dataset cifar100
-```
-
-Adam:
-
-```shell
-python main.py --algorithm Adam --lookahead 0 --dataset cifar100
-```
-
-SGD + lookahead:
-
-```shell
-python main.py --algorithm SGD --dataset cifar100
-```
-
-SGD:
-
-```shell
-python main.py --algorithm SGD --lookahead 0 --dataset cifar100
-```
-
-##### 可视化复现方法
-
-（注：以下可视化均运行在results目录下）
-
-cifar10的train loss对比
-
-```shell
-tensorboard --logdir runs/040
-```
-
-cifar10的test accuracy对比
-
-```shell
-tensorboard --logdir runs/041
-```
-
-cifar100的train loss对比
-
-```shell
-tensorboard --logdir runs/140
-```
-
-cifar100的test accuracy对比
-
-```shell
-tensorboard --logdir runs/141
-```
-
-
-
-#### 1.7 Batch与步数k的组合实验
-
-//TODO:设计原因--这个让wxs好好说一下
-
-我们选取了三组超参数：
-
-- 步长5 + batch128
-- 步长2 + batch320
-- 步长10 + batch64
-
-##### 实验结果
-
-//TODO 解释
-
-![cifar10_batch_loss](/results/picture/cifar10_batch_loss.png)
-
-![cifar10_batch_acc](/results/picture/cifar10_batch_acc.png)
-
-![cifar100_batch_loss](/results/picture/cifar100_batch_loss.png)
-
-![cifar100_batch_acc](/results/picture/cifar100_batch_acc.png)
-
-##### 实验复现方法
-
-(注：以下实验均运行在src目录下)
-
-cifar10：
-
-步长5 + batch128
-
-```shell
-python main.py
-```
-
-步长2 + batch320
-
-```shell 
-python main.py --lookahead_steps 2 --batch_size 320
-```
-
-步长10 + batch64
-
-```shell 
-python main.py --lookahead_steps 10 --batch_size 64
-```
-
-cifar100:
-
-步长5 + batch128
-
-```shell
-python main.py --dataset cifar100
-```
-
-步长2 + batch320
-
-```shell 
-python main.py --lookahead_steps 2 --batch_size 320 --dataset cifar100
-```
-
-步长10 + batch64
-
-```shell 
-python main.py --lookahead_steps 10 --batch_size 64 --dataset cifar100
-```
-
-##### 可视化复现方法
-
-（注：以下可视化均运行在results目录下）
-
-cifar10的train loss对比
-
-```shell
-tensorboard --logdir runs/050
-```
-
-cifar10的test accuracy对比
-
-```shell
-tensorboard --logdir runs/051
-```
-
-cifar100的train loss对比
-
-```shell
-tensorboard --logdir runs/150
-```
-
-cifar100的test accuracy对比
-
-```shell
-tensorboard --logdir runs/151
-```
-
-
-
-#### 1.8 不同任务的实验
-
-因为仅仅在Resnet18 + cifar10/100下验证是不够充分的，因此，我们选择了作业2,3的网络和数据集，以及用LSTM网络进行imdb情感分类的任务进行综合验证。
-
-##### 1.8.1 作业2的CNN图片分类
-
-##### 超参数
-
-- 三层CNN网络
-- 学习率0.0001，不进行衰减
-- 内部学习率alpha = 0.8
-- 内部步长k = 5
-
-##### 实验结果
-
-![hw2_loss](/results/picture/hw2_loss.png)
-
-此时，lookahead并没有有效优化RAdam
-
-![hw2_acc](/results/picture/hw2_acc.png)
-
-而准确率两者差不多
-
-##### 实验复现方法
-
-(注：以下实验均运行在src目录下)
-
-Ranger
-
-```shell
-python main.py --dataset self_cnn
-```
-
-RAdam
-
-```shell 
-python main.py --dataset self_cnn --lookahead 0
-```
-
-##### 可视化复现方法
-
-（注：以下可视化均运行在results目录下）
-
-train loss对比
-
-```shell
-tensorboard --logdir runs/400
-```
-
-test accuracy对比
-
-```shell
-tensorboard --logdir runs/401
-```
-
-##### 1.8.2 作业3的自然语言建模
-
-##### 超参数
-
-- 2层单向GRU网络
-- 学习率0.001，不进行衰减
-- 内部学习率alpha = 0.8
-- 内部步长k = 5
-
-##### 实验结果
-
-![nlp_train](/results/picture/nlp_train.png)
-
-此时，lookahead并没有有效优化RAdam
-
-![hw2_acc](/results/picture/nlp_test.png)
-
-而结果两者差不多
-
-##### 实验复现方法
-
-(注：以下实验均运行在src目录下)
-
-Ranger
-
-```shell
-python main_nlp.py
-```
-
-RAdam
-
-```shell 
-python main_nlp.py --lookahead 0
-```
-
-##### 可视化复现方法
-
-（注：以下可视化均运行在results目录下）
-
-train loss对比
-
-```shell
-tensorboard --logdir runs/200
-```
-
-test accuracy对比
-
-```shell
-tensorboard --logdir runs/201
-```
-
-
-
-##### 1.8.3 LSTM进行IMDB数据集的情感分类
-
-##### 超参数
-
-- 2层双向LSTM网络
-- 学习率0.1，不进行衰减
-- 内部学习率alpha = 0.8
-- 内部步长k = 5
-
-##### 实验结果
-
-![nlp_train](/results/picture/imdb_loss.png)
-
-此时，lookahead并没有有效优化RAdam
-
-![hw2_acc](/results/picture/imdb_acc.png)
-
-而结果两者差不多
-
-##### 实验复现方法
-
-(注：以下实验均运行在src目录下)
-
-Ranger
-
-```shell
-python main.py --dataset imdb
-```
-
-RAdam
-
-```shell 
-python main.py --lookahead 0 --dataset imdb
-```
-
-##### 可视化复现方法
-
-（注：以下可视化均运行在results目录下）
-
-train loss对比
-
-```shell
-tensorboard --logdir runs/300
-```
-
-test accuracy对比
-
-```shell
-tensorboard --logdir runs/301
-```
-
-
-
-##### 参考代码
-
-lookahead代码：https://github.com/michaelrzhang/lookahead
-cifar10/100：https://github.com/uoguelph-mlrg/Cutout/blob/master/train.py
-IMDB情感分类： https://github.com/Cong-Huang/Pytorch-imdb-classification
-
+[3]  IMDB classification dataset:  https://github.com/Cong-Huang/Pytorch-imdb-classification
