@@ -18,7 +18,7 @@ Lookahead Optimizer的核心思想来源于上世纪凸优化领域的研究。�
 
 从算法结构而言，Lookahead Optimizer本质上是一个优化器的优化器。Lookahead Optimizer的运行需要一个其他的优化器，例如Adam等，在后文中我们将称之为内层优化器。与之相对应的外层优化器则是Lookahead Optimizer着重实现的部分。算法的实现方法可以大致描述为：内层优化器每运行k个iter，得到参数更新总量为dW，外层优化器更新α * dW。下图是该方法的一种直观表达。
 
-![可视化](../results/insight.png)
+![可视化](..\results\insight.png)
 
 
 
@@ -56,9 +56,9 @@ Lookahead Optimizer的核心思想来源于上世纪凸优化领域的研究。�
 
   在cifar10数据集上训练和测试时，train_loss 和 test_accuracy 曲线如下：
 
-  ![cifar10_base_loss](../results/picture/cifar10_base_loss.png)
+  ![cifar10_base_loss](..\results\picture\cifar10_base_loss.png)
 
-  ![cifar10_base_acc](../results/picture/cifar10_base_acc.png)
+  ![cifar10_base_acc](..\results\picture\cifar10_base_acc.png)
 
   
 
