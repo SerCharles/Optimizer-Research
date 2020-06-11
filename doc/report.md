@@ -66,7 +66,7 @@ Lookahead Optimizer的核心思想来源于上世纪凸优化领域的研究。�
 
   ![cifar100_base_loss](..\results\picture\cifar100_base_loss.png)
 
-  ![cifar100_bass_acc](..\results\picture\cifar100_bass_acc.png)
+  ![cifar100_bass_acc](..\results\picture\cifar100_base_acc.png)
 
 
 
